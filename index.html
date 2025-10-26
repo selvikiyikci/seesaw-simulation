@@ -7,6 +7,17 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div class ="values">
+        <div class = "card"><small>LEFT WEIGHT</small><strong id = "leftVal">0.0 kg</strong></div>
+        <div class = "card"><small>NEXT WEIGHT</small><strong id = "nextVal">-</strong></div>
+        <div class = "card"><small>RIGHT WEIGHT</small><strong id = "rightVal">0.0 kg</strong></div>
+        <div class = "card"><small>TILT ANGLE</small><strong id = "angleVal">0.0°</strong></div>
+    </div>
+    <div class ="canvasArea">
+        <canvas id="cv" width="800" height="300"></canvas>
+    </div>
+    <button id ="resetBtn" class = "btn">RESET</button>
+    <div id ="log" class = "log"></div>
   <script src="main.js"></script>
 </body>
 </html>
