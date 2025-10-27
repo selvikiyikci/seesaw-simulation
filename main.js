@@ -7,8 +7,16 @@
   let CANVAS_HEIGHT = 300;
 
   const COLORS = [
-    "#2f6fec", "#2fc48d", "#ffb020", "#ef5766", "#7b61ff",
-    "#34aadc", "#8bd26a", "#f27f3d", "#aa66cc", "#5e6ad2"
+    "#2f6fec",
+    "#2fc48d",
+    "#ffb020",
+    "#ef5766",
+    "#7b61ff",
+    "#34aadc",
+    "#8bd26a",
+    "#f27f3d",
+    "#aa66cc",
+    "#5e6ad2",
   ];
 
   function updateCanvasSize() {
@@ -66,7 +74,6 @@
     };
   }
 
- 
   canvas.addEventListener("mousemove", (e) => {
     const mousePos = toCanvas(e);
     const rad = (angle * Math.PI) / 180;
@@ -86,19 +93,19 @@
     hover = null;
     canvas.style.cursor = "default";
   });
+
   canvas.addEventListener("click", () => {
     if (!hover) return;
     weights.push({
       w: nextW,
       x: hover.s,
       animating: true,
-      animationY: -300,    // yukarıdan düşmeye başlama konumu
-      animOpacity: 0,     // görünmez olur
+      animationY: -300,
+      animOpacity: 0,
       startY: -300,
     });
-    nextW = rndW(); 
+    nextW = rndW();
   });
-
 
   function drawWeights() {
     for (const it of weights) {
@@ -117,7 +124,7 @@
         }
 
         const endY = screenY;
-        const distance = endY - it.animY;
+        const distance = endY - it.animationY;
         it.animationY += distance * 0.08;
         it.animOpacity += (1 - it.animOpacity) * 0.15;
 
@@ -127,8 +134,34 @@
         }
 
         context.save();
-        context.translate(screenX, it.animY);
+        context.translate(screenX, it.animationY);
         context.globalAlpha = it.animOpacity;
+        const radius = 10 + (it.w - 1) * (10 / 9);
+        const c = colorOf(it.w);
+        context.fillStyle = c;
+        context.beginPath();
+        context.arc(0, 0, radius, 0, Math.PI * 2);
+        context.fill();
+        context.strokeStyle = "#000";
+        context.lineWidth = 2;
+        context.stroke();
+        context.fillStyle = "#fff";
+        context.font = "bold 12px system-ui";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(it.w + "kg", 0, 0);
+        context.restore();
+      } else {
+        const rad = (angle * Math.PI) / 180;
+        const cosA = Math.cos(rad);
+        const sinA = Math.sin(rad);
+        const localX = it.x;
+        const localY = -TH / 2 - 14;
+        const screenX = center.x + localX * cosA - localY * sinA;
+        const screenY = center.y + localX * sinA + localY * cosA;
+
+        context.save();
+        context.translate(screenX, screenY);
         const radius = 10 + (it.w - 1) * (10 / 9);
         const c = colorOf(it.w);
         context.fillStyle = c;
@@ -148,21 +181,31 @@
     }
   }
 
+  function updateBalance() {
+    let torqueSum = 0;
+    for (const it of weights) {
+      torqueSum += it.x * it.w;
+    }
+
+    targetA = (torqueSum / 200) * MAX_ANGLE;
+
+    targetA = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, targetA));
+  }
+
   function draw() {
     if (canvas.width !== CANVAS_WIDTH * dpr) updateCanvasSize();
+
+    updateBalance();
 
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     angle += (targetA - angle) * EASE;
 
-    // Arka plan
     context.fillStyle = "#1e2535";
     context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Zemin
     context.fillStyle = "#1e2535";
     context.fillRect(0, CANVAS_HEIGHT * 0.8, CANVAS_WIDTH, CANVAS_HEIGHT * 0.2);
 
-    // Pivot
     context.save();
     context.translate(center.x, center.y + 12);
     context.fillStyle = "#33445c";
@@ -213,10 +256,20 @@
     context.translate(center.x, center.y);
     context.rotate((angle * Math.PI) / 180);
     context.fillStyle = "#8b6a45";
-    context.fillRect(-plankLength / 2, -plankThickness / 2, plankLength, plankThickness);
+    context.fillRect(
+      -plankLength / 2,
+      -plankThickness / 2,
+      plankLength,
+      plankThickness
+    );
     context.strokeStyle = "#5a4430";
     context.lineWidth = 2;
-    context.strokeRect(-plankLength / 2, -plankThickness / 2, plankLength, plankThickness);
+    context.strokeRect(
+      -plankLength / 2,
+      -plankThickness / 2,
+      plankLength,
+      plankThickness
+    );
     context.restore();
 
     requestAnimationFrame(draw);
