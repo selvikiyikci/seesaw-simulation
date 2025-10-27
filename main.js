@@ -211,11 +211,8 @@
       startY: -300,
     });
 
-    log(
-      `<b>${nextW}kg</b> ${hover.s < 0 ? "sol" : "sağ"} tarafa <span class="chip">${Math.abs(
-        Math.round(hover.s)
-      )}px</span> kondu`
-    );
+log(`${nextW}kg dropped on ${hover.s < 0 ? "left" : "right"} side at ${Math.abs(Math.round(hover.s))}px from center`);
+
     playDropSound(nextW);
 
     nextW = rndW();
