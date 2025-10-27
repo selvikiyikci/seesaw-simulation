@@ -5,17 +5,40 @@
   canvas.width = canvas.clientWidth * ratio;
   canvas.height = canvas.clientHeight * ratio;
   context.scale(ratio, ratio);
+  let CANVAS_WIDTH = 800;
+  let CANVAS_HEIGHT = 300;
+  const dpr = window.devicePixelRatio || 1;
 
+  function updateCanvasSize() {
+  const container = canvas.parentElement;
+  const containerWidth = Math.min(container.clientWidth, 800);
+  const aspectRatio = 800 / 300;
+  CANVAS_WIDTH = containerWidth;
+  CANVAS_HEIGHT = containerWidth / aspectRatio;
+  canvas.width = CANVAS_WIDTH * dpr;
+  canvas.height = CANVAS_HEIGHT * dpr;
+  context.setTransform(1,0,0,1,0,0);
+  context.scale(dpr, dpr);
+  }
+  updateCanvasSize();
+  window.addEventListener("resize", updateCanvasSize);
   const plankLength = 400;
   const plankThickness = 16;
 
     const center = {
     x: canvas.clientWidth / 2,
     y: canvas.clientHeight / 2,
+    x: CANVAS_WIDTH / 2,
+    y: CANVAS_HEIGHT / 2,
   };
+  window.addEventListener("resize", () => {
+  center.x = CANVAS_WIDTH / 2;
+  center.y = CANVAS_HEIGHT / 2;
+  });
 
   function draw() {
-    context.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    if (canvas.width !== CANVAS_WIDTH * dpr) updateCanvasSize();
+    context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     context.save();
     context.translate(center.x, center.y + 20);
     context.fillStyle = "#3a4b5e";
