@@ -1,4 +1,4 @@
- ⚖️ Seesaw Simulation (HTML + CSS + JS)
+## ⚖️ Seesaw Simulation (HTML + CSS + JS)
 
 Interactive seesaw built with pure HTML, CSS, and Canvas 2D API.
 Move the mouse to see the projection, click to drop a weight, and watch the board tilt based on torque.
