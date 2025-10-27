@@ -102,7 +102,7 @@ angle += (targetA - angle) * 0.06;  // smooth, damped transition
 
 Meaning: heavier/farther weights dominate; we map net torque to a target tilt and ease toward it.
 
-## 3) Trade-offs / Limitations (Short)
+## 3) Trade-offs / Limitations 
 
 Simple physics: linear torque→angle mapping (no angular momentum, no friction/bounce).
 Pixels as distance: not scaled to real units; chosen for clarity and interview scope.
