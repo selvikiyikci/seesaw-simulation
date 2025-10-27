@@ -5,6 +5,7 @@
 
   let CANVAS_WIDTH = 800;
   let CANVAS_HEIGHT = 300;
+
   const leftVal = document.getElementById("leftVal");
   const rightVal = document.getElementById("rightVal");
   const angleVal = document.getElementById("angleVal");
@@ -71,6 +72,7 @@
   function rndW() {
     return 1 + Math.floor(Math.random() * 10);
   }
+
   function colorOf(w) {
     return COLORS[(w - 1) % COLORS.length];
   }
@@ -87,6 +89,7 @@
     d.innerHTML = "⚖️ " + html;
     logEl.prepend(d);
   }
+
   function saveState() {
     try {
       localStorage.setItem(
@@ -118,6 +121,17 @@
   }
 
   loadState();
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      weights = [];
+      nextW = rndW();
+      updateNextUI();
+      if (logEl) logEl.innerHTML = "";
+      saveState();
+      log("Reseted all weights and log.");
+    });
+  }
 
   function toCanvas(p) {
     const r = canvas.getBoundingClientRect();
@@ -157,11 +171,13 @@
       animOpacity: 0,
       startY: -300,
     });
+
     log(
       `<b>${nextW}kg</b> placed at <span class="chip">${Math.abs(
         Math.round(hover.s)
       )}px</span> ${hover.s < 0 ? "left" : "right"}`
     );
+
     nextW = rndW();
     updateNextUI();
     saveState();
@@ -188,22 +204,13 @@
         closestIndex = i;
       }
     }
+
     if (closestIndex !== -1) {
       const removed = weights.splice(closestIndex, 1)[0];
-      log(`removed <b>${removed.w}kg</b>`);
+      log(`Removed <b>${removed.w}kg</b>`);
       saveState();
     }
   });
-
-  if (resetBtn) {
-    resetBtn.addEventListener("click", () => {
-      weights = [];
-      nextW = rndW();
-      updateNextUI();
-      if (logEl) logEl.innerHTML = "";
-      saveState();
-    });
-  }
 
   function drawWeights() {
     for (const it of weights) {
