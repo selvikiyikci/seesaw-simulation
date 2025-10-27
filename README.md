@@ -5,7 +5,7 @@ Move the mouse to see the projection, click to drop a weight, and watch the boar
 
 Visit https://selvikiyikci.github.io/seesaw-simulation/
 
-## 1) Design Process (Short & Real)
+## 1) Design Process 
 
 # Step 1 — HTML & base CSS
 * Wrote a minimal layout: value cards (LEFT/NEXT/RIGHT/ANGLE), a canvas, a reset button, and a log.
@@ -36,7 +36,7 @@ Visit https://selvikiyikci.github.io/seesaw-simulation/
 
 
 
-## 2) Torque & Projection — What the Code Does (Brief)
+## 2) Torque & Projection — What the Code Does 
 
  # 2.1 Projection (cursor → plank axis)
 
@@ -62,7 +62,7 @@ canvas.addEventListener("mousemove", (e) => {
 });
 
 
-Meaning: project mouse onto the rotated plank, clamp to plank ends, and draw a ghost weight there.
+# Meaning: project mouse onto the rotated plank, bounded to plank ends and draw a ghost weight there.
 
 # 2.2 Placing a weight & logging
 
@@ -74,7 +74,7 @@ canvas.addEventListener("click", () => {
   nextW = rndW(); updateNextUI(); saveState();
 });
 
-# 2.3 Torque → target angle (and easing)
+# 2.3 Torque → target angle and easing)
 
 
 function updateBalance() {
