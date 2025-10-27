@@ -45,7 +45,12 @@
   }
 
   updateCanvasSize();
-  window.addEventListener("resize", updateCanvasSize);
+
+  window.addEventListener("resize", () => {
+    updateCanvasSize();
+    center.x = CANVAS_WIDTH / 2;
+    center.y = CANVAS_HEIGHT / 2;
+  });
 
   const plankLength = 400;
   const plankThickness = 16;
@@ -53,10 +58,6 @@
   const plankHalf = plankLength / 2;
 
   const center = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 };
-  window.addEventListener("resize", () => {
-    center.x = CANVAS_WIDTH / 2;
-    center.y = CANVAS_HEIGHT / 2;
-  });
 
   const EASE = 0.06;
   const MAX_ANGLE = 30;
@@ -177,6 +178,7 @@
       y: (p.clientY - r.top) * (CANVAS_HEIGHT / r.height),
     };
   }
+
 
   canvas.addEventListener("mousemove", (e) => {
     const mousePos = toCanvas(e);
