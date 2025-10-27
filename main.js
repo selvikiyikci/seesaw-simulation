@@ -107,17 +107,45 @@
     nextW = rndW();
   });
 
+  canvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    const mouse = toCanvas(e);
+    let closestIndex = -1;
+    let closestDist = 9999;
+
+    for (let i = 0; i < weights.length; i++) {
+      const it = weights[i];
+      const rad = (angle * Math.PI) / 180;
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
+      const localX = it.x;
+      const localY = -TH / 2 - 14;
+      const screenX = center.x + localX * cosA - localY * sinA;
+      const screenY = center.y + localX * sinA + localY * cosA;
+
+      const dist = Math.hypot(mouse.x - screenX, mouse.y - screenY);
+      if (dist < 20 && dist < closestDist) {
+        closestDist = dist;
+        closestIndex = i;
+      }
+    }
+
+    if (closestIndex !== -1) {
+      weights.splice(closestIndex, 1);
+    }
+  });
+
   function drawWeights() {
     for (const it of weights) {
-      if (it.animating) {
-        const rad = (angle * Math.PI) / 180;
-        const cosA = Math.cos(rad);
-        const sinA = Math.sin(rad);
-        const localX = it.x;
-        const localY = -TH / 2 - 14;
-        const screenX = center.x + localX * cosA - localY * sinA;
-        const screenY = center.y + localX * sinA + localY * cosA;
+      const rad = (angle * Math.PI) / 180;
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
+      const localX = it.x;
+      const localY = -TH / 2 - 14;
+      const screenX = center.x + localX * cosA - localY * sinA;
+      const screenY = center.y + localX * sinA + localY * cosA;
 
+      if (it.animating) {
         if (it.startScreenY === undefined) {
           it.startScreenY = 20;
           it.animationY = 20;
@@ -132,52 +160,26 @@
           it.animating = false;
           it.startScreenY = undefined;
         }
-
-        context.save();
-        context.translate(screenX, it.animationY);
-        context.globalAlpha = it.animOpacity;
-        const radius = 10 + (it.w - 1) * (10 / 9);
-        const c = colorOf(it.w);
-        context.fillStyle = c;
-        context.beginPath();
-        context.arc(0, 0, radius, 0, Math.PI * 2);
-        context.fill();
-        context.strokeStyle = "#000";
-        context.lineWidth = 2;
-        context.stroke();
-        context.fillStyle = "#fff";
-        context.font = "bold 12px system-ui";
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(it.w + "kg", 0, 0);
-        context.restore();
-      } else {
-        const rad = (angle * Math.PI) / 180;
-        const cosA = Math.cos(rad);
-        const sinA = Math.sin(rad);
-        const localX = it.x;
-        const localY = -TH / 2 - 14;
-        const screenX = center.x + localX * cosA - localY * sinA;
-        const screenY = center.y + localX * sinA + localY * cosA;
-
-        context.save();
-        context.translate(screenX, screenY);
-        const radius = 10 + (it.w - 1) * (10 / 9);
-        const c = colorOf(it.w);
-        context.fillStyle = c;
-        context.beginPath();
-        context.arc(0, 0, radius, 0, Math.PI * 2);
-        context.fill();
-        context.strokeStyle = "#000";
-        context.lineWidth = 2;
-        context.stroke();
-        context.fillStyle = "#fff";
-        context.font = "bold 12px system-ui";
-        context.textAlign = "center";
-        context.textBaseline = "middle";
-        context.fillText(it.w + "kg", 0, 0);
-        context.restore();
       }
+
+      context.save();
+      context.translate(screenX, it.animating ? it.animationY : screenY);
+      context.globalAlpha = it.animOpacity || 1;
+      const radius = 10 + (it.w - 1) * (10 / 9);
+      const c = colorOf(it.w);
+      context.fillStyle = c;
+      context.beginPath();
+      context.arc(0, 0, radius, 0, Math.PI * 2);
+      context.fill();
+      context.strokeStyle = "#000";
+      context.lineWidth = 2;
+      context.stroke();
+      context.fillStyle = "#fff";
+      context.font = "bold 12px system-ui";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(it.w + "kg", 0, 0);
+      context.restore();
     }
   }
 
@@ -186,9 +188,7 @@
     for (const it of weights) {
       torqueSum += it.x * it.w;
     }
-
     targetA = (torqueSum / 200) * MAX_ANGLE;
-
     targetA = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, targetA));
   }
 
