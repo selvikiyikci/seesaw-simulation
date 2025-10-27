@@ -46,22 +46,18 @@
   let targetA = 0;
   let angle = 0;
 
-
   let weights = [];
-  let nextW = rndW(); // sıradaki ağırlık
+  let nextW = rndW();
   let hover = null;
 
-  // Random ağırlık oluşturma
   function rndW() {
-    return 1 + Math.floor(Math.random() * 10); // 1–10 kg arası
+    return 1 + Math.floor(Math.random() * 10);
   }
 
-  // Ağırlığın rengi
   function colorOf(w) {
     return COLORS[(w - 1) % COLORS.length];
   }
 
-  // Ekrandaki mouse pozisyonunu canvas koordinatına çevirme
   function toCanvas(p) {
     const r = canvas.getBoundingClientRect();
     return {
@@ -70,7 +66,7 @@
     };
   }
 
-  // Hover 
+ 
   canvas.addEventListener("mousemove", (e) => {
     const mousePos = toCanvas(e);
     const rad = (angle * Math.PI) / 180;
@@ -79,10 +75,10 @@
     const dx = mousePos.x - center.x;
     const dy = mousePos.y - center.y;
     const projection = dx * ux + dy * uy;
-    const clampedS = Math.max(-plankHalf, Math.min(plankHalf, projection));
-    const projX = center.x + clampedS * ux;
-    const projY = center.y + clampedS * uy;
-    hover = { mouse: mousePos, proj: { x: projX, y: projY }, s: clampedS };
+    const boundedS = Math.max(-plankHalf, Math.min(plankHalf, projection));
+    const projX = center.x + boundedS * ux;
+    const projY = center.y + boundedS * uy;
+    hover = { mouse: mousePos, proj: { x: projX, y: projY }, s: boundedS };
     canvas.style.cursor = "pointer";
   });
 
@@ -90,8 +86,68 @@
     hover = null;
     canvas.style.cursor = "default";
   });
+  canvas.addEventListener("click", () => {
+    if (!hover) return;
+    weights.push({
+      w: nextW,
+      x: hover.s,
+      animating: true,
+      animationY: -300,    // yukarıdan düşmeye başlama konumu
+      animOpacity: 0,     // görünmez olur
+      startY: -300,
+    });
+    nextW = rndW(); 
+  });
 
-  // Çizim
+
+  function drawWeights() {
+    for (const it of weights) {
+      if (it.animating) {
+        const rad = (angle * Math.PI) / 180;
+        const cosA = Math.cos(rad);
+        const sinA = Math.sin(rad);
+        const localX = it.x;
+        const localY = -TH / 2 - 14;
+        const screenX = center.x + localX * cosA - localY * sinA;
+        const screenY = center.y + localX * sinA + localY * cosA;
+
+        if (it.startScreenY === undefined) {
+          it.startScreenY = 20;
+          it.animationY = 20;
+        }
+
+        const endY = screenY;
+        const distance = endY - it.animY;
+        it.animationY += distance * 0.08;
+        it.animOpacity += (1 - it.animOpacity) * 0.15;
+
+        if (Math.abs(it.animationY - endY) < 2 && it.animOpacity > 0.99) {
+          it.animating = false;
+          it.startScreenY = undefined;
+        }
+
+        context.save();
+        context.translate(screenX, it.animY);
+        context.globalAlpha = it.animOpacity;
+        const radius = 10 + (it.w - 1) * (10 / 9);
+        const c = colorOf(it.w);
+        context.fillStyle = c;
+        context.beginPath();
+        context.arc(0, 0, radius, 0, Math.PI * 2);
+        context.fill();
+        context.strokeStyle = "#000";
+        context.lineWidth = 2;
+        context.stroke();
+        context.fillStyle = "#fff";
+        context.font = "bold 12px system-ui";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(it.w + "kg", 0, 0);
+        context.restore();
+      }
+    }
+  }
+
   function draw() {
     if (canvas.width !== CANVAS_WIDTH * dpr) updateCanvasSize();
 
@@ -121,7 +177,6 @@
     context.stroke();
     context.restore();
 
-    // Hoverdaki görünmez ağırlık
     if (hover) {
       context.save();
       const ghostY = 100;
@@ -152,25 +207,16 @@
       context.restore();
     }
 
-    // Tahta için
+    drawWeights();
+
     context.save();
     context.translate(center.x, center.y);
     context.rotate((angle * Math.PI) / 180);
     context.fillStyle = "#8b6a45";
-    context.fillRect(
-      -plankLength / 2,
-      -plankThickness / 2,
-      plankLength,
-      plankThickness
-    );
+    context.fillRect(-plankLength / 2, -plankThickness / 2, plankLength, plankThickness);
     context.strokeStyle = "#5a4430";
     context.lineWidth = 2;
-    context.strokeRect(
-      -plankLength / 2,
-      -plankThickness / 2,
-      plankLength,
-      plankThickness
-    );
+    context.strokeRect(-plankLength / 2, -plankThickness / 2, plankLength, plankThickness);
     context.restore();
 
     requestAnimationFrame(draw);
