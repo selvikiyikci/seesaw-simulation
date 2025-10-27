@@ -38,6 +38,10 @@
 
   function draw() {
     if (canvas.width !== CANVAS_WIDTH * dpr) updateCanvasSize();
+    context.fillStyle = "#1e2535";
+    context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    context.fillStyle = "#1e2535";
+    context.fillRect(0, CANVAS_HEIGHT * 0.8, CANVAS_WIDTH, CANVAS_HEIGHT * 0.2);
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     context.save();
     context.translate(center.x, center.y + 20);
