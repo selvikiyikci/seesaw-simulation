@@ -6,6 +6,15 @@
   let CANVAS_WIDTH = 800;
   let CANVAS_HEIGHT = 300;
 
+  const leftVal = document.getElementById("leftVal");
+  const rightVal = document.getElementById("rightVal");
+  const angleVal = document.getElementById("angleVal");
+  const nextVal = document.getElementById("nextVal");
+
+  function fmt(n, u = "") {
+    return n.toFixed(1) + u;
+  }
+
   const COLORS = [
     "#2f6fec",
     "#2fc48d",
@@ -39,11 +48,7 @@
   const TH = plankThickness;
   const plankHalf = plankLength / 2;
 
-  const center = {
-    x: CANVAS_WIDTH / 2,
-    y: CANVAS_HEIGHT / 2,
-  };
-
+  const center = { x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT / 2 };
   window.addEventListener("resize", () => {
     center.x = CANVAS_WIDTH / 2;
     center.y = CANVAS_HEIGHT / 2;
@@ -54,6 +59,9 @@
   let targetA = 0;
   let angle = 0;
 
+  let leftSum = 0,
+    rightSum = 0;
+
   let weights = [];
   let nextW = rndW();
   let hover = null;
@@ -61,10 +69,14 @@
   function rndW() {
     return 1 + Math.floor(Math.random() * 10);
   }
-
   function colorOf(w) {
     return COLORS[(w - 1) % COLORS.length];
   }
+
+  function updateNextUI() {
+    if (nextVal) nextVal.textContent = `${nextW} kg`;
+  }
+  updateNextUI();
 
   function toCanvas(p) {
     const r = canvas.getBoundingClientRect();
@@ -105,6 +117,7 @@
       startY: -300,
     });
     nextW = rndW();
+    updateNextUI();
   });
 
   canvas.addEventListener("contextmenu", (e) => {
@@ -129,10 +142,7 @@
         closestIndex = i;
       }
     }
-
-    if (closestIndex !== -1) {
-      weights.splice(closestIndex, 1);
-    }
+    if (closestIndex !== -1) weights.splice(closestIndex, 1);
   });
 
   function drawWeights() {
@@ -150,12 +160,10 @@
           it.startScreenY = 20;
           it.animationY = 20;
         }
-
         const endY = screenY;
         const distance = endY - it.animationY;
         it.animationY += distance * 0.08;
         it.animOpacity += (1 - it.animOpacity) * 0.15;
-
         if (Math.abs(it.animationY - endY) < 2 && it.animOpacity > 0.99) {
           it.animating = false;
           it.startScreenY = undefined;
@@ -184,12 +192,29 @@
   }
 
   function updateBalance() {
-    let torqueSum = 0;
+    leftSum = 0;
+    rightSum = 0;
+    let leftTorque = 0,
+      rightTorque = 0;
+
     for (const it of weights) {
-      torqueSum += it.x * it.w;
+      const torque = it.w * Math.abs(it.x);
+      if (it.x < 0) {
+        leftSum += it.w;
+        leftTorque += torque;
+      } else {
+        rightSum += it.w;
+        rightTorque += torque;
+      }
     }
-    targetA = (torqueSum / 200) * MAX_ANGLE;
-    targetA = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, targetA));
+
+    const diff = rightTorque - leftTorque;
+    const TORQUE_SCALE = 10;
+    targetA = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, diff / TORQUE_SCALE));
+
+    if (leftVal) leftVal.textContent = fmt(leftSum, " kg");
+    if (rightVal) rightVal.textContent = fmt(rightSum, " kg");
+    if (angleVal) angleVal.textContent = fmt(targetA, "°");
   }
 
   function draw() {
@@ -199,13 +224,11 @@
 
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     angle += (targetA - angle) * EASE;
-
     context.fillStyle = "#1e2535";
     context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     context.fillStyle = "#1e2535";
     context.fillRect(0, CANVAS_HEIGHT * 0.8, CANVAS_WIDTH, CANVAS_HEIGHT * 0.2);
-
     context.save();
     context.translate(center.x, center.y + 12);
     context.fillStyle = "#33445c";
@@ -251,7 +274,6 @@
     }
 
     drawWeights();
-
     context.save();
     context.translate(center.x, center.y);
     context.rotate((angle * Math.PI) / 180);
