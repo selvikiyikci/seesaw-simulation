@@ -39,7 +39,7 @@ Visit https://selvikiyikci.github.io/seesaw-simulation/
 ## 2) Torque & Projection — What the Code Does 
 
  # 2.1 Projection (cursor → plank axis)
-
+```
 canvas.addEventListener("mousemove", (e) => {
   const r = canvas.getBoundingClientRect();
   const mouse = {
@@ -52,40 +52,48 @@ canvas.addEventListener("mousemove", (e) => {
   const dx = mouse.x - center.x, dy = mouse.y - center.y;
 
   const s = dx * ux + dy * uy;                    // signed projection
-  const sClamped = Math.max(-plankLength/2, Math.min(plankLength/2, s));
+  const boundedS = Math.max(-plankLength/2, Math.min(plankLength/2, s));
 
   hover = {
     mouse,
     proj: { x: center.x + sClamped * ux, y: center.y + sClamped * uy },
-    s: sClamped
+    s: boundedS
   };
 });
-
+```
 
 # Meaning: project mouse onto the rotated plank, bounded to plank ends and draw a ghost weight there.
 
 # 2.2 Placing a weight & logging
 
-
+```
 canvas.addEventListener("click", () => {
   if (!hover) return;
   weights.push({ w: nextW, x: hover.s, animating: true, animOpacity: 0 });
   log(⚖️ <b>${nextW}kg</b> ${hover.s < 0 ? "left" : "right"} ${Math.abs(Math.round(hover.s))}px);
-  nextW = rndW(); updateNextUI(); saveState();
+  nextW = rndW();
+  updateNextUI();
+  saveState();
 });
+```
+# 2.3 Torque → target angle and easing
 
-# 2.3 Torque → target angle and easing)
-
-
+```
 function updateBalance() {
   let leftTorque = 0, rightTorque = 0;
   leftSum = 0; rightSum = 0;
 
   for (const it of weights) {
     const t = it.w * Math.abs(it.x);     // torque = w × d
-    if (it.x < 0) { leftSum += it.w; leftTorque += t; }
-    else          { rightSum += it.w; rightTorque += t; }
+    if (it.x < 0) {
+    leftSum += it.w;
+    leftTorque += t;
+   }
+    else{
+   rightSum += it.w;
+   rightTorque += t;
   }
+   }
 
   const diff = rightTorque - leftTorque;
   const TORQUE_SCALE = 10;
@@ -98,9 +106,9 @@ function updateBalance() {
 
 
 angle += (targetA - angle) * 0.06;  // smooth, damped transition
+```
 
-
-Meaning: heavier/farther weights dominate; we map net torque to a target tilt and ease toward it.
+# Meaning: heavier/farther weights dominate; we map net torque to a target tilt and ease toward it.
 
 ## 3) Trade-offs / Limitations 
 
