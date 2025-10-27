@@ -69,6 +69,43 @@
   let nextW = rndW();
   let hover = null;
 
+  let audioContext = null;
+  function getAudioContext() {
+    if (!audioContext) {
+      try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      } catch {
+        return null;
+      }
+    }
+    if (audioContext.state === "suspended") audioContext.resume();
+    return audioContext;
+  }
+
+  function playDropSound(weight) {
+    const audioCtx = getAudioContext();
+    if (!audioCtx) return;
+    try {
+      const notes = [];
+      const baseFreq = 200 + weight * 25;
+      notes.push(baseFreq, baseFreq * 1.25, baseFreq * 1.5);
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const t = audioCtx.currentTime + i * 0.015;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.12, t + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.9);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.9);
+      });
+    } catch {}
+  }
+
   function rndW() {
     return 1 + Math.floor(Math.random() * 10);
   }
@@ -173,10 +210,11 @@
     });
 
     log(
-      `<b>${nextW}kg</b> placed at <span class="chip">${Math.abs(
+      `<b>${nextW}kg</b> ${hover.s < 0 ? "sol" : "sağ"} tarafa <span class="chip">${Math.abs(
         Math.round(hover.s)
-      )}px</span> ${hover.s < 0 ? "left" : "right"}`
+      )}px</span> kondu`
     );
+    playDropSound(nextW);
 
     nextW = rndW();
     updateNextUI();
