@@ -5,11 +5,14 @@
 
   let CANVAS_WIDTH = 800;
   let CANVAS_HEIGHT = 300;
-
   const leftVal = document.getElementById("leftVal");
   const rightVal = document.getElementById("rightVal");
   const angleVal = document.getElementById("angleVal");
   const nextVal = document.getElementById("nextVal");
+  const resetBtn = document.getElementById("resetBtn");
+  const logEl = document.getElementById("log");
+
+  const KEY = "seesaw_simulation";
 
   function fmt(n, u = "") {
     return n.toFixed(1) + u;
@@ -61,7 +64,6 @@
 
   let leftSum = 0,
     rightSum = 0;
-
   let weights = [];
   let nextW = rndW();
   let hover = null;
@@ -78,6 +80,45 @@
   }
   updateNextUI();
 
+  function log(html) {
+    if (!logEl) return;
+    const d = document.createElement("div");
+    d.className = "entry";
+    d.innerHTML = "⚖️ " + html;
+    logEl.prepend(d);
+  }
+  function saveState() {
+    try {
+      localStorage.setItem(
+        KEY,
+        JSON.stringify({
+          weights,
+          nextW,
+          logHtml: logEl ? logEl.innerHTML : "",
+        })
+      );
+    } catch {}
+  }
+
+  function loadState() {
+    try {
+      const s = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (s && Array.isArray(s.weights)) {
+        weights = s.weights.map((w) => ({
+          w: w.w,
+          x: w.x,
+          animating: false,
+          animOpacity: 1,
+        }));
+        nextW = s.nextW || rndW();
+        if (logEl && s.logHtml) logEl.innerHTML = s.logHtml;
+        updateNextUI();
+      }
+    } catch {}
+  }
+
+  loadState();
+
   function toCanvas(p) {
     const r = canvas.getBoundingClientRect();
     return {
@@ -89,10 +130,10 @@
   canvas.addEventListener("mousemove", (e) => {
     const mousePos = toCanvas(e);
     const rad = (angle * Math.PI) / 180;
-    const ux = Math.cos(rad);
-    const uy = Math.sin(rad);
-    const dx = mousePos.x - center.x;
-    const dy = mousePos.y - center.y;
+    const ux = Math.cos(rad),
+      uy = Math.sin(rad);
+    const dx = mousePos.x - center.x,
+      dy = mousePos.y - center.y;
     const projection = dx * ux + dy * uy;
     const boundedS = Math.max(-plankHalf, Math.min(plankHalf, projection));
     const projX = center.x + boundedS * ux;
@@ -116,42 +157,61 @@
       animOpacity: 0,
       startY: -300,
     });
+    log(
+      `<b>${nextW}kg</b> placed at <span class="chip">${Math.abs(
+        Math.round(hover.s)
+      )}px</span> ${hover.s < 0 ? "left" : "right"}`
+    );
     nextW = rndW();
     updateNextUI();
+    saveState();
   });
 
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     const mouse = toCanvas(e);
-    let closestIndex = -1;
-    let closestDist = 9999;
+    let closestIndex = -1,
+      closestDist = 9999;
 
     for (let i = 0; i < weights.length; i++) {
       const it = weights[i];
       const rad = (angle * Math.PI) / 180;
-      const cosA = Math.cos(rad);
-      const sinA = Math.sin(rad);
-      const localX = it.x;
-      const localY = -TH / 2 - 14;
+      const cosA = Math.cos(rad),
+        sinA = Math.sin(rad);
+      const localX = it.x,
+        localY = -TH / 2 - 14;
       const screenX = center.x + localX * cosA - localY * sinA;
       const screenY = center.y + localX * sinA + localY * cosA;
-
       const dist = Math.hypot(mouse.x - screenX, mouse.y - screenY);
       if (dist < 20 && dist < closestDist) {
         closestDist = dist;
         closestIndex = i;
       }
     }
-    if (closestIndex !== -1) weights.splice(closestIndex, 1);
+    if (closestIndex !== -1) {
+      const removed = weights.splice(closestIndex, 1)[0];
+      log(`removed <b>${removed.w}kg</b>`);
+      saveState();
+    }
   });
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      weights = [];
+      nextW = rndW();
+      updateNextUI();
+      if (logEl) logEl.innerHTML = "";
+      saveState();
+    });
+  }
 
   function drawWeights() {
     for (const it of weights) {
       const rad = (angle * Math.PI) / 180;
-      const cosA = Math.cos(rad);
-      const sinA = Math.sin(rad);
-      const localX = it.x;
-      const localY = -TH / 2 - 14;
+      const cosA = Math.cos(rad),
+        sinA = Math.sin(rad);
+      const localX = it.x,
+        localY = -TH / 2 - 14;
       const screenX = center.x + localX * cosA - localY * sinA;
       const screenY = center.y + localX * sinA + localY * cosA;
 
@@ -167,6 +227,7 @@
         if (Math.abs(it.animationY - endY) < 2 && it.animOpacity > 0.99) {
           it.animating = false;
           it.startScreenY = undefined;
+          saveState();
         }
       }
 
@@ -174,8 +235,7 @@
       context.translate(screenX, it.animating ? it.animationY : screenY);
       context.globalAlpha = it.animOpacity || 1;
       const radius = 10 + (it.w - 1) * (10 / 9);
-      const c = colorOf(it.w);
-      context.fillStyle = c;
+      context.fillStyle = colorOf(it.w);
       context.beginPath();
       context.arc(0, 0, radius, 0, Math.PI * 2);
       context.fill();
@@ -219,16 +279,15 @@
 
   function draw() {
     if (canvas.width !== CANVAS_WIDTH * dpr) updateCanvasSize();
-
     updateBalance();
 
     context.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     angle += (targetA - angle) * EASE;
-    context.fillStyle = "#1e2535";
-    context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     context.fillStyle = "#1e2535";
+    context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     context.fillRect(0, CANVAS_HEIGHT * 0.8, CANVAS_WIDTH, CANVAS_HEIGHT * 0.2);
+
     context.save();
     context.translate(center.x, center.y + 12);
     context.fillStyle = "#33445c";
@@ -247,8 +306,7 @@
       context.save();
       const ghostY = 100;
       const ghostRadius = 10 + (nextW - 1) * (10 / 9);
-      const c = colorOf(nextW);
-      context.fillStyle = c;
+      context.fillStyle = colorOf(nextW);
       context.beginPath();
       context.arc(hover.proj.x, ghostY, ghostRadius, 0, Math.PI * 2);
       context.fill();
@@ -274,6 +332,7 @@
     }
 
     drawWeights();
+
     context.save();
     context.translate(center.x, center.y);
     context.rotate((angle * Math.PI) / 180);
